@@ -1,0 +1,327 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Strongly set page background on html/body/#root to override DaisyUI theme defaults if needed */
+  html, body, #root { background-color: #fafafa !important; }
+  .blocky { font-family: 'Times New Roman', serif; }
+}
+
+/* Laboratory grid background */
+.grid-bg {
+  min-height: 100vh;
+  background-color: #fafafa;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px),
+    linear-gradient(rgba(0,0,0,0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.12) 1px, transparent 1px);
+  background-size:
+    20px 20px,
+    20px 20px,
+    100px 100px,
+    100px 100px;
+  animation: grid-drift 120s linear infinite;
+}
+
+@keyframes grid-drift {
+  0% {
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0;
+  }
+  100% {
+    background-position:
+      8px 8px,
+      12px 12px,
+      30px 30px,
+      45px 45px;
+  }
+}
+
+/* Ensure main app wrapper is transparent so the page background shows through */
+.min-h-screen { background: transparent !important; }
+
+/* Ensure data-theme container at the root does not override page background */
+div[data-theme] { background: transparent !important; }
+
+/* Small helper for the Roblox-like thumbnail feel */
+.thumbnail-placeholder{ @apply rounded-md h-36 flex items-center justify-center text-white font-bold text-lg; }
+
+/* soften shadows and add warm tint */
+.soft-shadow { box-shadow: 0 8px 18px rgba(240,100,120,0.08), 0 2px 6px rgba(0,0,0,0.04); }
+
+/* hover heart/clover next to play */
+.card-actions .btn .inline-appear { transition: opacity 220ms ease, transform 220ms ease; opacity: 0; transform: translateY(2px); }
+.group:hover .card-actions .btn .inline-appear { opacity: 1; transform: translateY(0); }
+
+/* play button: softer, less jarring */
+.play-btn { background: linear-gradient(90deg,#ff9db0,#ffc8d9); color: white; border: none; }
+.play-btn:hover { filter: brightness(0.98); }
+.play-btn .icon-heart { transition: all 220ms ease; }
+.group:hover .play-btn .icon-heart { opacity: 1; transform: translateX(0); }
+
+/* softer subtitle style */
+.card-body p.text-rose-600\/80 { font-style: italic; font-weight: 500; }
+
+/* clover subtle backgrounds */
+.thumbnail-placeholder img[alt="clover"], .thumbnail-placeholder svg { filter: drop-shadow(0 1px 0 rgba(255,255,255,0.05)); }
+
+
+/* Relationship Trivia stuff */
+/* ---- SPOTLIGHTS (QUIZ CARD) ---- */
+.spotlight {
+  position: absolute;
+  top: -60px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(
+    ellipse at bottom,
+    rgba(255, 182, 193, 0.5),
+    transparent 70%
+  );
+  filter: blur(22px);
+  opacity: 0.7;
+  z-index: -1;
+}
+
+.spotlight.left {
+  left: -60px;
+  transform: rotate(25deg);
+}
+
+.spotlight.right {
+  right: -60px;
+  transform: rotate(-25deg);
+}
+
+/* ---- START SCREEN SPOTLIGHTS ---- */
+.start-spotlight {
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 240, 255, 0.6),
+    transparent 70%
+  );
+  filter: blur(40px);
+  opacity: 0.5;
+}
+
+/* ---- MARQUEE BORDER (NO SPIN) ---- */
+.marquee-border {
+  position: relative;
+}
+
+.marquee-border::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 22px;
+  padding: 4px;
+  background: conic-gradient(
+    #ff7ecd,
+    #ffb6e6,
+    #cba6ff,
+    #93d3ff,
+    #ff7ecd
+  );
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: -1;
+  animation: none;
+}
+.game-title-glow,
+.countdown-glow {
+  text-shadow:
+    0 0 10px rgba(0,0,0,0.55),
+    0 0 20px rgba(0,0,0,0.35),
+    0 0 30px rgba(0,0,0,0.25);
+}
+
+/* Heart bubbles (main menu) - small white pixel hearts that float up and fade */
+.main-grid-wrapper { position: relative; z-index: 10; }
+.heart-bubbles { position: absolute; top: 0; bottom: 0; width: 12%; pointer-events: none; z-index: 0; }
+.heart-bubbles.left { left: -6%; }
+.heart-bubbles.right { right: -6%; }
+.heart-bubble { position: absolute; bottom: 0; display: block; width: 20px; height: 20px; transform-origin: center bottom; animation-name: heartFloat; animation-timing-function: ease-out; animation-iteration-count: infinite; }
+.heart-bubble svg { width: 20px; height: 20px; image-rendering: pixelated; shape-rendering: crispEdges; display: block; }
+
+/* Image-based floating hearts (used by HeartBubbles component) */
+.heart-bubble-img { image-rendering: pixelated; -ms-interpolation-mode: nearest-neighbor; pointer-events: none; will-change: transform, opacity; }
+
+@keyframes hbFloat {
+  0% { transform: translateY(0) scale(0.9); opacity: 0; }
+  8% { opacity: 0.95; }
+  60% { transform: translateY(-60vh) scale(1.02); opacity: 0.95; }
+  100% { transform: translateY(-140vh) scale(1.08); opacity: 0; }
+}
+
+@keyframes heartFloat {
+  0% { transform: translateY(0) scale(0.9); opacity: 0; }
+  10% { opacity: 0.9; }
+  60% { transform: translateY(-110px) scale(1.02); opacity: 0.9; }
+  100% { transform: translateY(-160px) scale(1.08); opacity: 0; }
+}
+
+/* Confetti burst at top (one-time). Particles use CSS vars for target translation/rotation */
+.confetti-container {
+  position: fixed;
+  top: 8px;
+  left: 0;
+  right: 0;
+  height: 380px; /* allow more vertical travel */
+  pointer-events: none;
+  z-index: 60;
+  overflow: visible;
+}
+.confetti-particle {
+  position: absolute;
+  top: 0;
+  transform-origin: center;
+  width: 28px;
+  height: auto;
+  will-change: transform, opacity;
+  animation-name: confettiBurst;
+  animation-timing-function: cubic-bezier(.2,.8,.3,1);
+  animation-fill-mode: forwards;
+}
+
+@keyframes confettiBurst {
+  0% {
+    transform: translate(0px, 0px) rotate(0deg) scale(0.8);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(var(--tx, 0px), var(--ty, 260px)) rotate(var(--rot, 0deg)) scale(1);
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate(calc(var(--tx, 0px) * 1.08), calc(var(--ty, 260px) * 1.5)) rotate(calc(var(--rot, 0deg) * 1.2)) scale(1.04);
+    opacity: 0;
+  }
+}
+
+/* Entry animations for home screen (play only when .home-animate is present on main) */
+.home-title, .home-subtitle, .home-grid { opacity: 1; transform: none; }
+.home-animate .home-title { opacity: 0; transform: translateY(-12px); animation: titleDrop 2000ms cubic-bezier(.2,.8,.25,1) forwards; animation-delay: 300ms; }
+.home-animate .home-subtitle { opacity: 0; transform: translateY(-8px); animation: subtitleFade 2000ms ease forwards; animation-delay: 750ms; }
+.home-animate .home-grid { opacity: 0; transform: translateY(12px); animation: gridUp 2200ms cubic-bezier(.2,.8,.25,1) forwards; animation-delay: 1100ms; }
+
+@keyframes titleDrop { to { opacity: 1; transform: translateY(0); } }
+@keyframes subtitleFade { to { opacity: 1; transform: translateY(0); } }
+@keyframes gridUp { to { opacity: 1; transform: translateY(0); } }
+
+/* Header area music toggle */
+.header-area { position: relative; display: block; }
+.music-toggle { position: absolute; top: 6px; right: 6px; width: 36px; height: 36px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.06); cursor: pointer; backdrop-filter: blur(4px); }
+.music-toggle img { display: block; width: 18px; height: 18px; object-fit: contain; }
+.music-toggle.on { background: linear-gradient(90deg,#ffd6e8,#e6e1ff); color: #5b214b; box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
+.music-toggle.off { opacity: 0.9; }
+
+/* tilt animation for toggle icon: left then right then settle */
+.music-toggle.animating img {
+  animation: soundToggle 420ms ease-in-out forwards;
+}
+
+@keyframes soundToggle {
+  0% { transform: rotate(0deg); }
+  20% { transform: rotate(-18deg); }
+  60% { transform: rotate(10deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Drafting-board extras: inner glow, trace, tooltip, cursor, annotations, grain, scanline */
+.exp-card { cursor: crosshair; position: relative; }
+.exp-card .inner-glow {
+  position: absolute;
+  inset: 0.5rem;
+  border-radius: 0;
+  background: radial-gradient(circle at 50% 30%, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.01) 40%, transparent 60%);
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+}
+.exp-card:hover .inner-glow { opacity: 0.12; }
+
+/* trace outline animation (SVG rect stroke-dash) */
+.trace-rect { stroke-dasharray: 1200; stroke-dashoffset: 1200; stroke-opacity: 0.9; }
+.group:hover .trace-rect { animation: trace 700ms linear forwards; }
+@keyframes trace {
+  to { stroke-dashoffset: 0; }
+}
+
+/* tooltip that briefly appears then fades when interacting with Access */
+.exp-access { position: relative; overflow: visible; }
+.exp-access .exp-tooltip {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: transparent;
+  color: #000;
+  font-size: 10px;
+  opacity: 0;
+  pointer-events: none;
+}
+.exp-access:hover .exp-tooltip { animation: tooltip-fade 900ms forwards; }
+@keyframes tooltip-fade {
+  0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  60% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+}
+
+/* handwritten margin notes */
+.annotations .note {
+  position: absolute;
+  font-family: 'Segoe Script', 'Brush Script MT', cursive;
+  color: rgba(0, 0, 0, 0.15);
+  font-size: 12px;
+  user-select: none;
+}
+.annotations .left-note { top: 120px; left: -36px; transform: rotate(-12deg); }
+.annotations .right-note { top: 220px; right: -40px; transform: rotate(14deg); }
+.annotations .bottom-note { bottom: 80px; left: 60px; transform: rotate(-6deg); }
+
+/* awaiting input dim */
+.grid-bg.idle > main { filter: brightness(0.82); transition: filter 600ms ease; }
+.awaiting-input { opacity: 0.9; }
+
+/* build flicker */
+.build-line.flicker { animation: build-flicker 420ms steps(2, end); }
+@keyframes build-flicker { 0% { opacity: 1 } 50% { opacity: 0 } 100% { opacity: 1 } }
+
+/* grain overlay and scanline flicker */
+.grid-bg { position: relative; }
+.grid-bg::before {
+  /* subtle paper grain using radial gradients */
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(0,0,0,0.02) 1px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.18;
+  mix-blend-mode: multiply;
+}
+.grid-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(0,0,0,0.02) 1px, transparent 1px);
+  background-size: 100% 3px;
+  opacity: 0.03;
+  animation: scanline-flicker 10s steps(1, end) infinite;
+}
+@keyframes scanline-flicker {
+  0% { opacity: 0.02 }
+  4% { opacity: 0.04 }
+  6% { opacity: 0.01 }
+  100% { opacity: 0.02 }
+}
+

@@ -35,3 +35,59 @@ Clone it. Enter the lab. Push buttons.
 
 ```powershell
 npm install
+```
+
+Or if you're one of *those* people:
+
+```powershell
+pnpm install
+# or
+yarn
+```
+
+---
+
+### 2️⃣ Run the dev server
+
+```powershell
+npm run dev
+```
+
+Then open whatever URL Vite prints in the terminal.
+
+Usually something like:
+
+```
+http://localhost:5173
+```
+
+---
+
+## 🧠 What This Repo Is For
+
+- UI experiments  
+- Component ideas  
+- Animation tests  
+- API poking  
+- State management chaos  
+- “Wait what if…” moments  
+
+Basically: structured nonsense.
+
+---
+
+## 🛑 Production Ready?
+
+Absolutely not.
+
+Unless it is.
+
+Then yes.
+
+---
+
+## 🧪 Philosophy
+
+> Build fast.  
+> Break things.  
+> Keep the fun.

@@ -3,36 +3,129 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "react-confetti";
 
+/* ============================================================
+   GLOBAL PUZZLE CACHE (persists across navigation)
+============================================================ */
 
-// ------------------------------------------------------------
-// PHRASES — Add as many as you want
-// ------------------------------------------------------------
-const PHRASES = [
-  
-  "YEAH SAME THOUGH I LOVE YOU VOICE THE NIGHT WE WATCHED THREE IDIOTS AND YOU WERE SINGING MADE ME SO HAPPY BECAUSE YOU SINGING IS SUCH A HAPPY SOUND",
-  "I LIKE BEING THE FIRST PERSON YOU TALK TO ... I LIKE BEING THE LAST TOO",
-  "YOU'RE SO COMFORTABLE TO BE AROUND (AND ON, 10/10 PILLOW AND STUFFED ANIMAL)",
-  "DUDE IT'S SO CUTE LIKE [YOUR LAUGH] SOUNDS LIKE MUSIC ... IT'S SUCH A PRETTY SOUND",
-  "YOU LOOK SO SO SO CUTE. I WOULD CUTENESS AGGRESSION THE SHIT OUT OF YOU",
-  "I THINK I STARTED LOVING YOU AS A PERSON AT DURGA PUJO",
-  "YOU'RE A LOT OF THINGS BUT MOSTLY YOU'RE WHY COLLEGE STARTED TO FEEL LIKE HOME",
-  "I SLEEP SO THAT I CAN SEE YOU BECAUSE I HATE TO WAIT THAT LONG",
-  "DO YOU WANT TO BE THE +1 TO MY WEDDING?",
-  "I WAS GOING TO SAY U DESERVE BETTER BUT NO ACTUALLY UR PERFECT FOR ME AND I'M PERFECT FOR U END OF SENTENCE WE BELONG TOGETHER",
-  "I'VE LEARNED A LOT FROM YOU BECAUSE OF THAT ... MOSTLY LIKE HARRY POTTER STUFF BUT THAT'S PERFECT",
-  "I LOVE WHEN YOU LOVE ME AND I LOVE THAT YOU LOVE ME"
-];
+const puzzleCache = {};
+let hasPreloaded = false;
 
-// ------------------------------------------------------------
-// Helpers
-// -------------------------is-----------------------------------
+/* ============================================================
+   TEXT BUILDING (multi-sentence splice, 90–160 chars)
+============================================================ */
 
-function randomPhrase() {
-  return PHRASES[Math.floor(Math.random() * PHRASES.length)];
+function buildPlayableText(text, min = 90, max = 160) {
+  const sentences = text.split(/(?<=[.!?])\s+/);
+
+  let result = "";
+
+  for (let s of sentences) {
+    const cleaned = s
+      .replace(/\([^)]*\)/g, "")
+      .replace(/[^a-zA-Z0-9\s.,!?'-]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (!cleaned) continue;
+
+    if ((result + " " + cleaned).length > max) break;
+
+    result += (result ? " " : "") + cleaned;
+
+    if (result.length >= min) break;
+  }
+
+  if (result.length < min) return null;
+
+  return result.toUpperCase();
 }
 
+/* ============================================================ */
+
+function getTodayString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash);
+}
+
+/* ============================================================ */
+
+function matchesCategory(data, category) {
+  if (category === "general") return true;
+
+  const desc = data.description?.toLowerCase() || "";
+
+  if (category === "people") {
+    return (
+      desc.includes("born") ||
+      desc.includes("actor") ||
+      desc.includes("writer") ||
+      desc.includes("scientist")
+    );
+  }
+
+  if (category === "places") {
+    return desc.match(/city|country|town|village|capital|state/);
+  }
+
+  return true;
+}
+
+/* ============================================================ */
+
+async function getRandomPuzzle(category) {
+  while (true) {
+    const res = await fetch(
+      "https://en.wikipedia.org/api/rest_v1/page/random/summary"
+    );
+    const data = await res.json();
+
+    if (!data.extract || data.type !== "standard") continue;
+    if (!matchesCategory(data, category)) continue;
+
+    const playable = buildPlayableText(data.extract);
+    if (!playable) continue;
+
+    return playable;
+  }
+}
+
+async function getDailyPuzzle(category) {
+  const seed = `${getTodayString()}-${category}`;
+  const number = hashString(seed);
+  const pageId = (number % 1000000) + 1;
+
+  try {
+    const res = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${pageId}`
+    );
+    const data = await res.json();
+
+    if (!data.extract || data.type !== "standard")
+      return getRandomPuzzle(category);
+
+    if (!matchesCategory(data, category))
+      return getRandomPuzzle(category);
+
+    const playable = buildPlayableText(data.extract);
+    if (!playable) return getRandomPuzzle(category);
+
+    return playable;
+  } catch {
+    return getRandomPuzzle(category);
+  }
+}
+
+/* ============================================================ */
+
 function generateCipherNumbers(plaintext) {
-  // Collect unique letters from the phrase
   const letters = [...new Set(
     plaintext
       .toUpperCase()
@@ -40,14 +133,12 @@ function generateCipherNumbers(plaintext) {
       .filter((ch) => /[A-Z]/.test(ch))
   )];
 
-  // Generate numbers 1–26 and shuffle them
   const nums = Array.from({ length: 26 }, (_, i) => i + 1);
   for (let i = nums.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [nums[i], nums[j]] = [nums[j], nums[i]];
   }
 
-  // Assign each letter the next random number
   const map = {};
   letters.forEach((letter, idx) => {
     map[letter] = nums[idx];
@@ -55,7 +146,6 @@ function generateCipherNumbers(plaintext) {
 
   return map;
 }
-
 
 function buildPuzzleData(plaintext, cipherMap) {
   return plaintext.split("").map((ch) => {
@@ -82,83 +172,171 @@ function moveToPrevLetter(data, index) {
   return index;
 }
 
+/* ============================================================ */
 
-// ------------------------------------------------------------
-// MAIN COMPONENT
-// ------------------------------------------------------------
 export default function Cryptogram() {
   const [restartKey, setRestartKey] = useState(0);
   const [activeIndex, setActiveIndex] = useState(null);
-  const [guesses, setGuesses] = useState({}); // code → letter
+  const [guesses, setGuesses] = useState({});
+  const [phrase, setPhrase] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [revealsUsed, setRevealsUsed] = useState(0);
 
-  // Build puzzle on restart
+  const [mode, setMode] = useState("random");
+  const [category, setCategory] = useState("general");
+  const [difficulty, setDifficulty] = useState("easy");
+
+  /* ============================================================
+     CACHED FETCH (GLOBAL CACHE)
+  ============================================================ */
+
+  useEffect(() => {
+    const key = `${mode}-${category}`;
+
+    const loadPuzzle = async () => {
+      setRevealsUsed(0);
+
+      if (puzzleCache[key]) {
+        setPhrase(puzzleCache[key]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const text =
+          mode === "daily"
+            ? await getDailyPuzzle(category)
+            : await getRandomPuzzle(category);
+
+        puzzleCache[key] = text;
+        setPhrase(text);
+      } catch {
+        setPhrase("FALLBACK PHRASE");
+      }
+
+      setLoading(false);
+    };
+
+    loadPuzzle();
+  }, [mode, category, restartKey]);
+
+  /* ============================================================
+     BACKGROUND PRELOAD (RUNS ONCE PER APP SESSION)
+  ============================================================ */
+
+  useEffect(() => {
+    if (hasPreloaded) return;
+    hasPreloaded = true;
+
+    const preloadAll = async () => {
+      const modes = ["random", "daily"];
+      const categories = ["general", "people", "places"];
+
+      for (let m of modes) {
+        for (let c of categories) {
+          const key = `${m}-${c}`;
+          if (puzzleCache[key]) continue;
+
+          const text =
+            m === "daily"
+              ? await getDailyPuzzle(c)
+              : await getRandomPuzzle(c);
+
+          puzzleCache[key] = text;
+        }
+      }
+    };
+
+    preloadAll();
+  }, []);
+
+  /* ============================================================ */
+
   const puzzle = useMemo(() => {
-    const phrase = randomPhrase();
+    if (!phrase) return { phrase: "", data: [] };
     const cipher = generateCipherNumbers(phrase);
     return { phrase, data: buildPuzzleData(phrase, cipher) };
-  }, [restartKey]);
+  }, [phrase]);
 
   const { data } = puzzle;
 
-  // SOLVED?
-  const isSolved = data.every((cell) => {
-    if (cell.type !== "letter") return true;
-    const guess = guesses[cell.code];
-    return guess && guess.toUpperCase() === cell.plain.toUpperCase();
-  });
+  const isSolved =
+    data.length > 0 &&
+    data.every((cell, i) => {
+      if (cell.type !== "letter") return true;
 
-  // ------------------------------------------------------------
-  // KEYBOARD INPUT SUPPORT (web keyboard)
-  // ------------------------------------------------------------
+      const guess =
+        difficulty === "easy"
+          ? guesses[cell.code]
+          : guesses[i];
+
+      return guess && guess.toUpperCase() === cell.plain;
+    });
+
+  /* ============================================================
+     KEYBOARD
+  ============================================================ */
+
   useEffect(() => {
     const handler = (e) => {
       if (activeIndex === null) return;
 
-      if (e.key.match(/^[a-zA-Z]$/)) {
-        handleGuess(e.key.toUpperCase());
-      }
+      if (e.key.match(/^[a-zA-Z]$/)) handleGuess(e.key.toUpperCase());
       if (e.key === "ArrowLeft") handleArrowLeft();
       if (e.key === "ArrowRight") handleArrowRight();
       if (e.key === "Backspace") handleBackspace();
       if (e.key === "Delete") handleDelete();
     };
 
-
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   });
 
+  useEffect(() => {
+    setGuesses({});
+    setActiveIndex(null);
+  }, [difficulty, phrase]);
+
   const handleGuess = (letter) => {
     if (activeIndex == null || data[activeIndex].type !== "letter") return;
 
-    const code = data[activeIndex].code;
+    if (difficulty === "easy") {
+      const code = data[activeIndex].code;
+      setGuesses((prev) => ({ ...prev, [code]: letter }));
+    } else {
+      setGuesses((prev) => ({ ...prev, [activeIndex]: letter }));
+    }
 
-    setGuesses((prev) => ({
-      ...prev,
-      [code]: letter.toUpperCase()
-    }));
-
-    // auto-move
     setActiveIndex(moveToNextLetter(data, activeIndex));
   };
 
   const handleArrowLeft = () => {
-    if (activeIndex != null) setActiveIndex(moveToPrevLetter(data, activeIndex));
+    if (activeIndex != null)
+      setActiveIndex(moveToPrevLetter(data, activeIndex));
   };
 
   const handleArrowRight = () => {
-    if (activeIndex != null) setActiveIndex(moveToNextLetter(data, activeIndex));
+    if (activeIndex != null)
+      setActiveIndex(moveToNextLetter(data, activeIndex));
   };
 
   const handleDelete = () => {
     if (activeIndex == null) return;
-    const code = data[activeIndex].code;
-    setGuesses((prev) => ({ ...prev, [code]: "" }));
+
+    if (difficulty === "easy") {
+      const code = data[activeIndex].code;
+      setGuesses((prev) => ({ ...prev, [code]: "" }));
+    } else {
+      setGuesses((prev) => ({ ...prev, [activeIndex]: "" }));
+    }
   };
+
   const handleBackspace = () => {
-    handleDelete()
-    handleArrowLeft()
-  }
+    handleDelete();
+    handleArrowLeft();
+  };
 
   const handleRestart = () => {
     setActiveIndex(null);
@@ -167,188 +345,182 @@ export default function Cryptogram() {
   };
 
   const revealRandomLetter = () => {
-  // Find all cells that are letters AND not yet guessed
-  const unrevealed = data.filter(
-    (cell) => cell.type === "letter" && (!guesses[cell.code] || guesses[cell.code] === "")
+    const unrevealed = data.filter((cell, i) => {
+      if (cell.type !== "letter") return false;
+
+      const guess =
+        difficulty === "easy"
+          ? guesses[cell.code]
+          : guesses[i];
+
+      return !guess;
+    });
+
+    if (!unrevealed.length) return;
+
+    const chosen =
+      unrevealed[Math.floor(Math.random() * unrevealed.length)];
+
+    const index = data.findIndex((c) => c === chosen);
+
+    if (difficulty === "easy") {
+      setGuesses((prev) => ({
+        ...prev,
+        [chosen.code]: chosen.plain,
+      }));
+    } else {
+      setGuesses((prev) => ({
+        ...prev,
+        [index]: chosen.plain,
+      }));
+    }
+
+    setRevealsUsed((r) => r + 1);
+  };
+
+  const Spinner = () => (
+    <div className="flex items-center justify-center py-10">
+      <div className="w-10 h-10 border-4 border-pink-300 border-t-pink-600 rounded-full animate-spin" />
+    </div>
   );
 
-  if (unrevealed.length === 0) return; // nothing to reveal
+  /* ============================================================ */
 
-  // Pick one at random
-  const chosen = unrevealed[Math.floor(Math.random() * unrevealed.length)];
-
-  // Reveal its actual correct letter
-  setGuesses((prev) => ({
-    ...prev,
-    [chosen.code]: chosen.plain.toUpperCase(),
-  }));
-
-  // Optional: move focus to that revealed cell
-  const index = data.findIndex(
-    (c) => c.type === "letter" && c.code === chosen.code
-  );
-  if (index !== -1) setActiveIndex(index);
-};
-
-  // COLORS matching your existing app
-  const ACTIVE_COLOR = "#e3d2ff"; // lilac
-  const GROUP_COLOR = "#f7d6e6";  // pink
-  const TEXT_COLOR = "#9a6573";
-
-  // ------------------------------------------------------------
-  // RENDER
-  // ------------------------------------------------------------
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-pink-100 overflow-hidden px-6">
-
-      {/* White Pane Container (MATCHED STYLE) */}
+    <div className="relative min-h-screen flex items-center justify-center bg-pink-100 px-6">
       <div className="relative bg-white/70 backdrop-blur-md rounded-xl shadow-xl p-10 
-                      flex flex-col items-center space-y-10 max-w-3xl w-full">
+                      flex flex-col items-center space-y-8 max-w-3xl w-full">
 
-        {/* Back Button */}
         <Link
           to="/"
-          className="absolute -top-4 left-4 px-4 py-2 rounded-lg bg-pink-300 hover:bg-pink-400 
-                    text-white text-sm shadow-md transition z-20"
+          className="absolute -top-4 left-4 px-4 py-2 rounded-lg bg-pink-300 text-white text-sm shadow-md"
         >
           ← Back
         </Link>
 
-        {/* Title */}
-        <h1 className="text-4xl font-bold text-pink-700 drop-shadow-lg">
+        <h1 className="text-4xl font-bold text-pink-700">
           Cryptogram
         </h1>
 
-        {/* PUZZLE GRID */}
-        <div className="flex flex-wrap justify-center gap-3 max-w-2xl">
-          {data.map((cell, i) => {
-            if (cell.type === "space") {
-              return <div key={i} style={{ width: "16px" }} />;
-            }
-            if (cell.type === "punct") {
-              return (
-                <div key={i} className="text-2xl text-pink-700 mx-1">
-                  {cell.char}
-                </div>
-              );
-            }
+        <div className="flex gap-4">
+          <button onClick={() => setMode("random")} className="px-3 py-1 bg-pink-200 rounded">
+            Random
+          </button>
+          <button onClick={() => setMode("daily")} className="px-3 py-1 bg-pink-200 rounded">
+            Daily
+          </button>
 
-            const isActive = i === activeIndex;
-            const guess = guesses[cell.code] || "";
-            const sameGroupActive =
-              activeIndex != null &&
-              data[activeIndex].type === "letter" &&
-              data[activeIndex].code === cell.code;
-
-            const bg = isActive ? ACTIVE_COLOR : sameGroupActive ? GROUP_COLOR : "transparent";
-
-            return (
-              <div
-                key={i}
-                onClick={() => setActiveIndex(i)}
-                className="flex flex-col items-center cursor-pointer px-1 py-1 rounded-md"
-                style={{ background: bg, minWidth: 32 }}
-              >
-                {/* guessed letter */}
-                <div className="h-6 text-xl text-pink-700">{guess}</div>
-
-                {/* underline */}
-                <div className="w-full h-[2px] bg-pink-700 mb-1" />
-
-                {/* code number */}
-                <div className="text-xs text-pink-700">{cell.code}</div>
-              </div>
-            );
-          })}
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="px-3 py-1 rounded"
+          >
+            <option value="general">General</option>
+            <option value="people">People</option>
+            <option value="places">Places</option>
+          </select>
         </div>
 
-        {/* KEYBOARD */}
-        <Keyboard
-          onLetter={handleGuess}
-          onLeft={handleArrowLeft}
-          onRight={handleArrowRight}
-          onBackspace={handleBackspace}
-          onDelete={handleDelete}
-        />
-        <button
-  onClick={revealRandomLetter}
-  className="mt-6 px-3 py-2 bg-purple-300 hover:bg-purple-400 
-             text-white text-lg rounded-xl shadow-md transition font-semibold"
->
-  Reveal a Letter ✨
-</button>
+        {loading ? (
+          <Spinner />
+        ) : (
+          <>
+            <div className="flex flex-wrap justify-center gap-3 max-w-2xl">
+              {data.map((cell, i) => {
+                if (cell.type === "space")
+                  return <div key={i} style={{ width: 16 }} />;
 
+                if (cell.type === "punct")
+                  return (
+                    <div key={i} className="text-2xl text-pink-700">
+                      {cell.char}
+                    </div>
+                  );
+
+                const guess =
+                  difficulty === "easy"
+                    ? guesses[cell.code] || ""
+                    : guesses[i] || "";
+
+                const isActive = i === activeIndex;
+
+                return (
+                  <div
+                    key={i}
+                    onClick={() => setActiveIndex(i)}
+                    className={`flex flex-col items-center cursor-pointer rounded px-1
+                      ${isActive ? "bg-pink-200 shadow-md scale-105" : ""}
+                    `}
+                  >
+                    <div className="h-6 text-xl">{guess}</div>
+                    <div
+                      className={`w-6 h-[2px] mb-1 ${
+                        isActive ? "bg-pink-500" : "bg-pink-700"
+                      }`}
+                    />
+                    <div className="text-xs">{cell.code}</div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <Keyboard
+              onLetter={handleGuess}
+              onLeft={handleArrowLeft}
+              onRight={handleArrowRight}
+              onBackspace={handleBackspace}
+              onDelete={handleDelete}
+            />
+
+            <button
+              onClick={revealRandomLetter}
+              className="px-3 py-2 bg-purple-300 text-white rounded"
+            >
+              Reveal a Letter ✨
+            </button>
+          </>
+        )}
       </div>
 
-      {/* SOLVED OVERLAY */}
       <AnimatePresence>
-  {isSolved && (
-    <motion.div
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[999]"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
+        {isSolved && (
+          <motion.div
+            className="fixed inset-0 bg-black/40 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <Confetti recycle={false} />
 
-      {/* Confetti */}
-      <Confetti
-        numberOfPieces={220}
-        gravity={0.25}
-        recycle={false}
-      />
+            <div className="bg-white p-10 rounded-3xl text-center">
+              <h2 className="text-3xl font-bold mb-4">
+                🎉 SOLVED! 🎉
+              </h2>
 
-      <motion.div
-        initial={{ scale: 0.6, rotate: -10, opacity: 0 }}
-        animate={{ scale: 1, rotate: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative bg-white/90 backdrop-blur-xl p-10 rounded-3xl shadow-2xl max-w-xl w-[90%] text-center marquee-border"
-      >
-        {/* Back */}
-        <Link
-          to="/"
-          className="absolute -top-4 left-4 px-4 py-2 rounded-lg bg-pink-300 hover:bg-pink-400 
-                     text-white text-sm shadow-md transition"
-        >
-          ← Back
-        </Link>
+              <p className="mb-6 text-lg">
+                “{puzzle.phrase}”
+              </p>
 
-        <h2 className="text-4xl font-extrabold text-pink-700 mb-6 drop-shadow-lg">
-          🎉 SOLVED! 🎉
-        </h2>
-
-        {/* Display full phrase */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="text-2xl font-bold text-purple-700 mb-10 leading-snug"
-        >
-          “{puzzle.phrase}”<br/>-Ape
-        </motion.p>
-
-        {/* Play again */}
-        <motion.button
-          onClick={handleRestart}
-          animate={{ scale: [1, 1.07, 1] }}
-          transition={{ repeat: Infinity, duration: 1.4 }}
-          className="px-8 py-4 bg-pink-500 text-white rounded-xl text-xl font-bold 
-                     shadow-lg hover:scale-105 transition"
-        >
-          Play Again 💖
-        </motion.button>
-
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence>
-
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={handleRestart}
+                  className="px-4 py-2 bg-pink-500 text-white rounded"
+                >
+                  Play Again 💖
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-// ------------------------------------------------------------
-// KEYBOARD
-// ------------------------------------------------------------
+/* ============================================================
+   KEYBOARD
+============================================================ */
+
 function Keyboard({ onLetter, onLeft, onRight, onBackspace, onDelete }) {
   const rows = [
     "QWERTYUIOP".split(""),
@@ -356,41 +528,27 @@ function Keyboard({ onLetter, onLeft, onRight, onBackspace, onDelete }) {
     "ZXCVBNM".split("")
   ];
 
-  const keyClass =
-    "bg-white border border-pink-200 rounded-lg shadow-sm px-4 py-3 text-pink-700 text-lg font-semibold cursor-pointer hover:bg-pink-50 transition";
-
   return (
-    <div className="w-full flex flex-col items-center space-y-3">
+    <div className="flex flex-col items-center space-y-2">
+      {rows.map((row, i) => (
+        <div key={i} className="flex gap-2">
+          {row.map((l) => (
+            <button
+              key={l}
+              onClick={() => onLetter(l)}
+              className="px-3 py-2 bg-white border rounded"
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+      ))}
 
-      {/* ROW 1 */}
       <div className="flex gap-2">
-        {rows[0].map((l) => (
-          <button key={l} className={keyClass} onClick={() => onLetter(l)}>
-            {l}
-          </button>
-        ))}
-      </div>
-
-      {/* ROW 2 */}
-      <div className="flex gap-2">
-        {rows[1].map((l) => (
-          <button key={l} className={keyClass} onClick={() => onLetter(l)}>
-            {l}
-          </button>
-        ))}
-      </div>
-
-      {/* ROW 3 + Arrows inline */}
-      <div className="flex gap-2 items-center">
-        <button className={keyClass} onClick={onLeft}>←</button>
-
-        {rows[2].map((l) => (
-          <button key={l} className={keyClass} onClick={() => onLetter(l)}>
-            {l}
-          </button>
-        ))}
-
-        <button className={keyClass} onClick={onRight}>→</button>
+        <button onClick={onLeft} className="px-3 py-2 bg-white border rounded">←</button>
+        <button onClick={onRight} className="px-3 py-2 bg-white border rounded">→</button>
+        <button onClick={onBackspace} className="px-3 py-2 bg-white border rounded">⌫</button>
+        <button onClick={onDelete} className="px-3 py-2 bg-white border rounded">DEL</button>
       </div>
     </div>
   );

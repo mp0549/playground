@@ -984,3 +984,240 @@ div[data-theme] { background: transparent !important; }
   flex-wrap: wrap;
   margin-top: 1.25rem;
 }
+
+
+/* ═══════════════════════════════════════════════
+   BREAKOUT PAGE
+   ═══════════════════════════════════════════════ */
+
+/* ── Panel ── */
+.bb-panel {
+  background: #fff;
+  border: 1px solid #1a1a1a;
+  max-width: 560px;
+  width: 100%;
+}
+
+/* ── Status bar ── */
+.bb-status {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.55rem 1rem;
+  flex-wrap: wrap;
+}
+.bb-stat-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.bb-stat-label {
+  font-family: 'Courier New', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #999;
+}
+.bb-stat-val {
+  font-family: 'Courier New', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #1a1a1a;
+}
+.bb-lives {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.bb-life-pip {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  display: block;
+}
+.bb-ctrl-group {
+  display: flex;
+  gap: 0.35rem;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.bb-toggle {
+  font-family: 'Courier New', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #777;
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
+}
+.bb-toggle:hover {
+  border-color: #1a1a1a;
+  color: #1a1a1a;
+}
+.bb-toggle.on {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+/* ── Mutation countdown ── */
+.bb-countdown {
+  font-family: 'Courier New', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #aaa;
+  padding: 0.2rem 1rem 0.3rem;
+}
+
+/* ── Per-mutation indicator ── */
+.bb-mutation-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mut-color, #e8c940);
+  background: color-mix(in srgb, var(--mut-color, #e8c940) 8%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--mut-color, #e8c940) 35%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--mut-color, #e8c940) 35%, transparent);
+  animation: bb-mut-pulse 1.8s ease-in-out infinite;
+}
+.bb-mut-warn {
+  font-weight: 900;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+@keyframes bb-mut-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+/* ── Canvas wrapper ── */
+.bb-canvas-wrap {
+  position: relative;
+  background: #0d0d12;
+  display: block;
+  line-height: 0; /* remove inline gap under canvas */
+}
+.bb-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: crosshair;
+}
+
+/* ── Glitch animation (triggered on mutation) ── */
+@keyframes bb-glitch {
+  0%   { transform: translate(0, 0)     skewX(0deg);    filter: none;                    opacity: 1;    }
+  12%  { transform: translate(-5px, 2px) skewX(-1.8deg); filter: hue-rotate(25deg) brightness(1.4); opacity: 0.88; }
+  25%  { transform: translate(4px, -2px) skewX(0.8deg);  filter: hue-rotate(-20deg);      opacity: 0.92; }
+  37%  { transform: translate(-3px, 0)  skewX(0deg);    filter: brightness(1.25);        opacity: 1;    }
+  50%  { transform: translate(5px, 1px) skewX(-1deg);   filter: none;                    opacity: 0.85; }
+  62%  { transform: translate(-2px,-1px) skewX(0.5deg);  filter: hue-rotate(12deg);       opacity: 0.95; }
+  75%  { transform: translate(3px, 2px) skewX(0deg);    filter: brightness(1.15);        opacity: 1;    }
+  88%  { transform: translate(-1px, 0)  skewX(-0.5deg); filter: none;                    opacity: 0.97; }
+  100% { transform: translate(0, 0)     skewX(0deg);    filter: none;                    opacity: 1;    }
+}
+.bb-glitch {
+  animation: bb-glitch 0.55s steps(4, end) forwards;
+}
+
+/* ── Life-lost flash ── */
+.bb-flash-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #e8c940;
+  background: rgba(13, 13, 18, 0.72);
+  pointer-events: none;
+  animation: bb-flash-fade 1.2s ease-out forwards;
+}
+@keyframes bb-flash-fade {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ── Game-over overlay ── */
+.bb-end-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(13, 13, 18, 0.92);
+  z-index: 20;
+  padding: 2rem;
+  text-align: center;
+}
+.bb-end-eyebrow {
+  font-family: 'Courier New', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 0.4rem;
+}
+.bb-end-title {
+  font-family: 'Times New Roman', serif;
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f0f0ee;
+  margin-bottom: 0.75rem;
+}
+.bb-end-rule {
+  max-width: 180px;
+  background: #333;
+  margin: 0 auto 0.75rem;
+}
+.bb-end-score {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  color: #e8c940;
+  margin-bottom: 1.25rem;
+}
+.bb-end-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+/* Invert button colours for dark overlay */
+.bb-end-overlay .crypto-action-btn {
+  color: #f0f0ee;
+  border-color: #f0f0ee;
+}
+.bb-end-overlay .crypto-action-btn:hover {
+  background: #f0f0ee;
+  color: #0d0d12;
+}
+
+/* ── Instructions ── */
+.bb-instructions {
+  font-family: 'Courier New', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #bbb;
+  text-align: center;
+  padding: 0.55rem 1rem 0.7rem;
+}

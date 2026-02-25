@@ -1,23 +1,80 @@
-Anniversary Games — local dev setup
+Welcome to the lab.
 
-This project is scaffolded for React + Vite + Tailwind + DaisyUI.
+This is my chaotic little corner of the internet where I:
 
-Quick start:
+Try ideas
 
-1. Install deps
+Break things
 
-```powershell
+Learn stuff
+
+Ship tiny experiments
+
+Abandon half of them responsibly™
+
+If it works — great.
+If it explodes — also great.
+
+🧱 Stack
+
+This project is scaffolded for:
+
+⚛️ React
+
+⚡ Vite
+
+🎨 Tailwind CSS
+
+🌼 DaisyUI
+
+Translation: it’s fast, pretty, and mildly dangerous.
+
+🚀 Quick Start
+
+Clone it. Enter the lab. Push buttons.
+
+1️⃣ Install dependencies
 npm install
-```
 
-2. Run dev server
+or if you're one of those people:
 
-```powershell
+pnpm install
+# or
+yarn
+2️⃣ Run the dev server
 npm run dev
-```
 
-Notes:
-- The project uses a `roblox-bright` DaisyUI theme for a bright, playful look.
-- The homepage menu is implemented with Tailwind/DaisyUI cards and a blocky font.
-- Add images into `src/assets/photos`, `src/assets/hearts`, and `src/assets/bricks`.
-Note: If you've updated dependencies (e.g., `react-router-dom`) re-run `npm install` so the router is available.
+Then open whatever URL Vite screams at you in the terminal.
+
+Usually something like:
+
+http://localhost:5173
+🧠 What This Repo Is For
+
+UI experiments
+
+Component ideas
+
+Animation tests
+
+API poking
+
+State management chaos
+
+“Wait what if…” moments
+
+Basically: structured nonsense.
+
+🛑 Production Ready?
+
+Absolutely not.
+
+Unless it is.
+
+Then yes.
+
+🧪 Philosophy
+
+Build fast.
+Break things.
+Keep the fun.

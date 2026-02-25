@@ -616,3 +616,371 @@ div[data-theme] { background: transparent !important; }
 .module-btn:hover .module-btn-arrow {
   transform: translateX(4px);
 }
+
+
+/* ═══════════════════════════════════════════════
+   CRYPTOGRAM PAGE
+   ═══════════════════════════════════════════════ */
+
+/* ── Page wrapper ── */
+.crypto-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3rem 1rem 5rem;
+}
+
+/* ── Main panel ── */
+.crypto-panel {
+  background: #fff;
+  border: 1px solid #1a1a1a;
+  max-width: 760px;
+  width: 100%;
+}
+
+/* ── Header ── */
+.crypto-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+}
+.crypto-back {
+  font-family: 'Courier New', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #1a1a1a;
+  text-decoration: none;
+  border: 1px solid #1a1a1a;
+  padding: 0.3rem 0.6rem;
+  white-space: nowrap;
+  transition: background 140ms ease, color 140ms ease;
+}
+.crypto-back:hover {
+  background: #1a1a1a;
+  color: #fff;
+}
+.crypto-header-center {
+  text-align: center;
+}
+.crypto-eyebrow {
+  font-family: 'Courier New', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #999;
+  margin-bottom: 0.2rem;
+}
+.crypto-title {
+  font-family: 'Times New Roman', serif;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1a1a1a;
+  line-height: 1;
+}
+.crypto-header-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e8c940;
+  border: 1px solid #c4a820;
+  box-shadow: 0 0 5px rgba(232, 201, 64, 0.7);
+  animation: sys-pulse 3s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* ── Divider ── */
+.crypto-rule {
+  width: 100%;
+  height: 1px;
+  background: #1a1a1a;
+}
+
+/* ── Controls ── */
+.crypto-controls {
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.crypto-ctrl-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.crypto-ctrl-label {
+  font-family: 'Courier New', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #999;
+  width: 72px;
+  flex-shrink: 0;
+}
+.crypto-toggle-group {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.crypto-toggle {
+  font-family: 'Courier New', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #666;
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 0.25rem 0.65rem;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
+}
+.crypto-toggle:hover {
+  border-color: #1a1a1a;
+  color: #1a1a1a;
+}
+.crypto-toggle.on {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+/* ── Puzzle cells ── */
+.crypto-cells-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 6px;
+  padding: 1.5rem 1rem;
+  justify-content: center;
+}
+.crypto-space {
+  width: 14px;
+}
+.crypto-punct {
+  font-family: 'Times New Roman', serif;
+  font-size: 1rem;
+  color: #555;
+  align-self: flex-end;
+  padding-bottom: 5px;
+}
+.crypto-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 30px;
+  cursor: pointer;
+  border: 1px solid #d0d0d0;
+  transition: border-color 120ms ease, background 120ms ease;
+  user-select: none;
+}
+.crypto-cell:hover {
+  border-color: #888;
+}
+.crypto-cell.active {
+  border-color: #1a1a1a;
+  background: #1a1a1a;
+}
+.crypto-cell.correct {
+  border-color: #1a1a1a;
+}
+.crypto-cell-guess {
+  height: 22px;
+  width: 100%;
+  font-family: 'Courier New', monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0;
+}
+.crypto-cell.active .crypto-cell-guess {
+  color: #fff;
+}
+.crypto-cell-divider {
+  width: 100%;
+  height: 1px;
+  background: #d0d0d0;
+}
+.crypto-cell.active .crypto-cell-divider {
+  background: #555;
+}
+.crypto-cell-code {
+  height: 15px;
+  width: 100%;
+  font-family: 'Courier New', monospace;
+  font-size: 0.52rem;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.crypto-cell.active .crypto-cell-code {
+  color: #888;
+}
+.crypto-cell.correct .crypto-cell-code {
+  color: #888;
+}
+
+/* ── Keyboard ── */
+.crypto-keyboard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 1rem 1rem;
+}
+.crypto-key-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.crypto-key {
+  width: 32px;
+  height: 32px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #1a1a1a;
+  background: #fff;
+  border: 1px solid #1a1a1a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms ease, color 120ms ease;
+}
+.crypto-key:hover {
+  background: #1a1a1a;
+  color: #fff;
+}
+.crypto-key:active {
+  background: #000;
+  color: #fff;
+  transform: scale(0.93);
+}
+.crypto-key.ctrl {
+  width: auto;
+  padding: 0 10px;
+  min-width: 36px;
+}
+
+/* ── Actions row ── */
+.crypto-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  flex-wrap: wrap;
+}
+.crypto-action-btn {
+  font-family: 'Courier New', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #1a1a1a;
+  background: transparent;
+  border: 1px solid #1a1a1a;
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: background 140ms ease, color 140ms ease;
+}
+.crypto-action-btn:hover {
+  background: #1a1a1a;
+  color: #fff;
+}
+.crypto-action-btn:active {
+  background: #000;
+  color: #fff;
+}
+.crypto-reveal-count {
+  font-family: 'Courier New', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #aaa;
+}
+
+/* ── Loading ── */
+.crypto-loading {
+  padding: 3rem 1rem;
+  text-align: center;
+  font-family: 'Courier New', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+/* ── Solved overlay ── */
+.crypto-solved-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.crypto-solved-panel {
+  background: #f8f7f4;
+  border: 2px solid #1a1a1a;
+  padding: 2rem 2.5rem;
+  max-width: 520px;
+  width: 90%;
+  text-align: center;
+  position: relative;
+  z-index: 51;
+}
+.crypto-solved-eyebrow {
+  font-family: 'Courier New', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #999;
+  margin-bottom: 0.4rem;
+}
+.crypto-solved-title {
+  font-family: 'Times New Roman', serif;
+  font-size: 2rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+}
+.crypto-solved-phrase {
+  font-family: 'Times New Roman', serif;
+  font-size: 0.95rem;
+  font-style: italic;
+  color: #555;
+  line-height: 1.6;
+  margin: 1rem 0;
+}
+.crypto-solved-meta {
+  font-family: 'Courier New', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #bbb;
+  margin-bottom: 1rem;
+}
+.crypto-solved-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+}

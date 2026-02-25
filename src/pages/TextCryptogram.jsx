@@ -378,64 +378,90 @@ export default function Cryptogram() {
     setRevealsUsed((r) => r + 1);
   };
 
-  const Spinner = () => (
-    <div className="flex items-center justify-center py-10">
-      <div className="w-10 h-10 border-4 border-pink-300 border-t-pink-600 rounded-full animate-spin" />
-    </div>
-  );
-
-  /* ============================================================ */
+  /* ============================================================
+     RENDER
+  ============================================================ */
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-pink-100 px-6">
-      <div className="relative bg-white/70 backdrop-blur-md rounded-xl shadow-xl p-10 
-                      flex flex-col items-center space-y-8 max-w-3xl w-full">
+    <div className="grid-bg crypto-page">
+      <div className="crypto-panel">
 
-        <Link
-          to="/"
-          className="absolute -top-4 left-4 px-4 py-2 rounded-lg bg-pink-300 text-white text-sm shadow-md"
-        >
-          ← Back
-        </Link>
-
-        <h1 className="text-4xl font-bold text-pink-700">
-          Cryptogram
-        </h1>
-
-        <div className="flex gap-4">
-          <button onClick={() => setMode("random")} className="px-3 py-1 bg-pink-200 rounded">
-            Random
-          </button>
-          <button onClick={() => setMode("daily")} className="px-3 py-1 bg-pink-200 rounded">
-            Daily
-          </button>
-
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="px-3 py-1 rounded"
-          >
-            <option value="general">General</option>
-            <option value="people">People</option>
-            <option value="places">Places</option>
-          </select>
+        {/* ── Header ── */}
+        <div className="crypto-header">
+          <Link to="/" className="crypto-back">← BACK</Link>
+          <div className="crypto-header-center">
+            <p className="crypto-eyebrow">EXPERIMENT — CIPHER DECRYPTION</p>
+            <h1 className="crypto-title">CRYPTOGRAM</h1>
+          </div>
+          <span className="crypto-header-led" aria-hidden="true" />
         </div>
 
+        <div className="crypto-rule" />
+
+        {/* ── Controls ── */}
+        <div className="crypto-controls">
+          <div className="crypto-ctrl-row">
+            <span className="crypto-ctrl-label">MODE</span>
+            <div className="crypto-toggle-group">
+              {["random", "daily"].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  className={`crypto-toggle${mode === m ? " on" : ""}`}
+                >
+                  {m.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="crypto-ctrl-row">
+            <span className="crypto-ctrl-label">CATEGORY</span>
+            <div className="crypto-toggle-group">
+              {["general", "people", "places"].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setCategory(c)}
+                  className={`crypto-toggle${category === c ? " on" : ""}`}
+                >
+                  {c.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="crypto-ctrl-row">
+            <span className="crypto-ctrl-label">DIFFICULTY</span>
+            <div className="crypto-toggle-group">
+              {["easy", "hard"].map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setDifficulty(d)}
+                  className={`crypto-toggle${difficulty === d ? " on" : ""}`}
+                >
+                  {d.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="crypto-rule" />
+
+        {/* ── Puzzle area ── */}
         {loading ? (
-          <Spinner />
+          <div className="crypto-loading">
+            LOADING EXPERIMENT DATA<span className="lab-blink">_</span>
+          </div>
         ) : (
           <>
-            <div className="flex flex-wrap justify-center gap-3 max-w-2xl">
+            <div className="crypto-cells-wrap">
               {data.map((cell, i) => {
                 if (cell.type === "space")
-                  return <div key={i} style={{ width: 16 }} />;
+                  return <div key={i} className="crypto-space" />;
 
                 if (cell.type === "punct")
-                  return (
-                    <div key={i} className="text-2xl text-pink-700">
-                      {cell.char}
-                    </div>
-                  );
+                  return <div key={i} className="crypto-punct">{cell.char}</div>;
 
                 const guess =
                   difficulty === "easy"
@@ -443,28 +469,25 @@ export default function Cryptogram() {
                     : guesses[i] || "";
 
                 const isActive = i === activeIndex;
+                const isCorrect = guess !== "" && guess.toUpperCase() === cell.plain;
 
                 return (
                   <div
                     key={i}
                     onClick={() => setActiveIndex(i)}
-                    className={`flex flex-col items-center cursor-pointer rounded px-1
-                      ${isActive ? "bg-pink-200 shadow-md scale-105" : ""}
-                    `}
+                    className={`crypto-cell${isActive ? " active" : ""}${isCorrect ? " correct" : ""}`}
                   >
-                    <div className="h-6 text-xl">{guess}</div>
-                    <div
-                      className={`w-6 h-[2px] mb-1 ${
-                        isActive ? "bg-pink-500" : "bg-pink-700"
-                      }`}
-                    />
-                    <div className="text-xs">{cell.code}</div>
+                    <div className="crypto-cell-guess">{guess}</div>
+                    <div className="crypto-cell-divider" />
+                    <div className="crypto-cell-code">{cell.code}</div>
                   </div>
                 );
               })}
             </div>
 
-            <Keyboard
+            <div className="crypto-rule" />
+
+            <CryptoKeyboard
               onLetter={handleGuess}
               onLeft={handleArrowLeft}
               onRight={handleArrowRight}
@@ -472,42 +495,52 @@ export default function Cryptogram() {
               onDelete={handleDelete}
             />
 
-            <button
-              onClick={revealRandomLetter}
-              className="px-3 py-2 bg-purple-300 text-white rounded"
-            >
-              Reveal a Letter ✨
-            </button>
+            <div className="crypto-rule" />
+
+            <div className="crypto-actions">
+              <button onClick={revealRandomLetter} className="crypto-action-btn">
+                REVEAL LETTER
+              </button>
+              <button onClick={handleRestart} className="crypto-action-btn">
+                NEW PUZZLE
+              </button>
+              {revealsUsed > 0 && (
+                <span className="crypto-reveal-count">REVEALS: {revealsUsed}</span>
+              )}
+            </div>
           </>
         )}
       </div>
 
+      {/* ── Solved overlay ── */}
       <AnimatePresence>
         {isSolved && (
           <motion.div
-            className="fixed inset-0 bg-black/40 flex items-center justify-center"
+            className="crypto-solved-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <Confetti recycle={false} />
-
-            <div className="bg-white p-10 rounded-3xl text-center">
-              <h2 className="text-3xl font-bold mb-4">
-                🎉 SOLVED! 🎉
-              </h2>
-
-              <p className="mb-6 text-lg">
-                “{puzzle.phrase}”
-              </p>
-
-              <div className="flex gap-4 justify-center">
-                <button
-                  onClick={handleRestart}
-                  className="px-4 py-2 bg-pink-500 text-white rounded"
-                >
-                  Play Again 💖
+            <Confetti
+              recycle={false}
+              numberOfPieces={220}
+              colors={["#1a1a1a", "#e8c940", "#f0f0f0", "#666", "#fff"]}
+            />
+            <div className="crypto-solved-panel">
+              <p className="crypto-solved-eyebrow">EXPERIMENT COMPLETE</p>
+              <h2 className="crypto-solved-title">CIPHER DECODED</h2>
+              <div className="crypto-rule" />
+              <p className="crypto-solved-phrase">"{puzzle.phrase}"</p>
+              {revealsUsed > 0 && (
+                <p className="crypto-solved-meta">REVEALS USED: {revealsUsed}</p>
+              )}
+              <div className="crypto-solved-actions">
+                <button onClick={handleRestart} className="crypto-action-btn">
+                  RUN NEW EXPERIMENT
                 </button>
+                <Link to="/" className="crypto-action-btn">
+                  RETURN TO LAB
+                </Link>
               </div>
             </div>
           </motion.div>
@@ -521,34 +554,29 @@ export default function Cryptogram() {
    KEYBOARD
 ============================================================ */
 
-function Keyboard({ onLetter, onLeft, onRight, onBackspace, onDelete }) {
+function CryptoKeyboard({ onLetter, onLeft, onRight, onBackspace, onDelete }) {
   const rows = [
     "QWERTYUIOP".split(""),
     "ASDFGHJKL".split(""),
-    "ZXCVBNM".split("")
+    "ZXCVBNM".split(""),
   ];
 
   return (
-    <div className="flex flex-col items-center space-y-2">
+    <div className="crypto-keyboard">
       {rows.map((row, i) => (
-        <div key={i} className="flex gap-2">
+        <div key={i} className="crypto-key-row">
           {row.map((l) => (
-            <button
-              key={l}
-              onClick={() => onLetter(l)}
-              className="px-3 py-2 bg-white border rounded"
-            >
+            <button key={l} onClick={() => onLetter(l)} className="crypto-key">
               {l}
             </button>
           ))}
         </div>
       ))}
-
-      <div className="flex gap-2">
-        <button onClick={onLeft} className="px-3 py-2 bg-white border rounded">←</button>
-        <button onClick={onRight} className="px-3 py-2 bg-white border rounded">→</button>
-        <button onClick={onBackspace} className="px-3 py-2 bg-white border rounded">⌫</button>
-        <button onClick={onDelete} className="px-3 py-2 bg-white border rounded">DEL</button>
+      <div className="crypto-key-row">
+        <button onClick={onLeft}      className="crypto-key ctrl">←</button>
+        <button onClick={onRight}     className="crypto-key ctrl">→</button>
+        <button onClick={onBackspace} className="crypto-key ctrl">⌫</button>
+        <button onClick={onDelete}    className="crypto-key ctrl">DEL</button>
       </div>
     </div>
   );
